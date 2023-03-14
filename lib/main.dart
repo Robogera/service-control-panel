@@ -78,19 +78,15 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Row(children: [
-        Expanded(
-            flex: 1,
-            child: Container(
-              decoration: BoxDecoration(color: Colors.blue),
-            )),
-        Expanded(
-            flex: 1,
-            child: Container(
-              decoration: BoxDecoration(color: Colors.purple),
-            )),
-      ]),
-    );
+    return Row(children: [
+      Expanded(
+          child: Container(
+        decoration: BoxDecoration(color: Colors.blue),
+      )),
+      Container(
+        constraints: BoxConstraints(minWidth: 200, maxWidth: 300),
+        decoration: BoxDecoration(color: Colors.purple),
+      ),
+    ]);
   }
 }
