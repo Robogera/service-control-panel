@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 void main() => runApp(const MyApp());
@@ -11,8 +15,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: _title,
-      home: App(),
-      theme: ThemeData(primarySwatch: Colors.green),
+      home: const App(),
+      theme: ThemeData(primarySwatch: Colors.blueGrey),
     );
   }
 }
@@ -46,13 +50,14 @@ class _AppState extends State<App> with TickerProviderStateMixin {
               icon: Icon(Icons.home),
               text: "Home",
             ),
-            Tab(icon: Icon(Icons.pending), text: "Logs"),
+            Tab(icon: Icon(Icons.chat), text: "Logs"),
             Tab(icon: Icon(Icons.settings), text: "Settings"),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
+        // TODO: check if using const here doesn't break the stateful widgets inside
         children: [
           MainPage(),
           MainPage(),
@@ -70,7 +75,25 @@ class MainPage extends StatefulWidget {
   State<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+const List<Widget> powerActions = [
+  Text("run"),
+  Text("stop"),
+];
+
+const List<Widget> autostartPolicies = [
+  Text("enabled"),
+  Text("disabled"),
+];
+
+class _MainPageState extends State<MainPage>
+    with AutomaticKeepAliveClientMixin<MainPage> {
+  // TODO: move the initialization to initState() to grab the actuale state from the backend
+  final List<bool> _selectedPowerAction = <bool>[false, true];
+  final List<bool> _selectedAutostartPolicy = <bool>[false, true];
+
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   void initState() {
     super.initState();
@@ -78,15 +101,136 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      Expanded(
-          child: Container(
-        decoration: BoxDecoration(color: Colors.blue),
-      )),
-      Container(
-        constraints: BoxConstraints(minWidth: 200, maxWidth: 300),
-        decoration: BoxDecoration(color: Colors.purple),
+    super.build(context);
+    return Row(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Text("CPU usage:"),
+                Container(
+                  constraints: BoxConstraints(
+                    maxHeight: 300,
+                    minHeight: 200,
+                  ),
+                  padding: const EdgeInsets.only(left: 42.0, right: 42.0),
+                  child: PerformanceChart(),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Container(
+          constraints: const BoxConstraints(minWidth: 200, maxWidth: 300),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const Text("Synapse service"),
+                ToggleButtons(
+                  onPressed: (int indexPressed) {
+                    setState(() {
+                      for (int i = 0; i < _selectedPowerAction.length; i++) {
+                        _selectedPowerAction[i] = i == indexPressed;
+                      }
+                    });
+                  },
+                  isSelected: _selectedPowerAction,
+                  selectedColor: Colors.white,
+                  fillColor: Colors.blueGrey[600],
+                  children: powerActions,
+                ),
+                const Text("Start on server boot"),
+                ToggleButtons(
+                  onPressed: (int indexPressed) {
+                    setState(() {
+                      for (int i = 0;
+                          i < _selectedAutostartPolicy.length;
+                          i++) {
+                        _selectedAutostartPolicy[i] = i == indexPressed;
+                      }
+                    });
+                  },
+                  isSelected: _selectedAutostartPolicy,
+                  selectedColor: Colors.white,
+                  fillColor: Colors.blueGrey[600],
+                  children: autostartPolicies,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class PerformanceChart extends StatefulWidget {
+  const PerformanceChart({super.key});
+
+  final color = Colors.red;
+
+  @override
+  State<PerformanceChart> createState() => _PerformanceChartState();
+}
+
+class _PerformanceChartState extends State<PerformanceChart> {
+  final dotsLimit = 100;
+  final points = <FlSpot>[];
+
+  double xVal = 0;
+  double step = 0.1;
+
+  late Timer timer;
+
+  @override
+  void initState() {
+    super.initState();
+    timer = Timer.periodic(const Duration(milliseconds: 400), (timer) {
+      while (points.length > dotsLimit) {
+        points.removeAt(0);
+      }
+      setState(() {
+        points.add(FlSpot(
+            xVal,
+            ((1 + math.sin(xVal)) / 2 +
+                    (math.Random().nextDouble() - 0.5) * 0.4)
+                .abs()));
+      });
+      xVal += step;
+    });
+  }
+
+  LineChartBarData line(List<FlSpot> points) {
+    return LineChartBarData(
+      spots: points,
+      dotData: FlDotData(
+        show: false,
       ),
-    ]);
+      barWidth: 4,
+      isCurved: true,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LineChart(
+      LineChartData(
+        minY: 0,
+        maxY: 1.2,
+        minX: points.first.x,
+        maxX: points.last.x,
+        titlesData: FlTitlesData(show: false),
+        lineTouchData: LineTouchData(enabled: false),
+        clipData: FlClipData.all(),
+        gridData: FlGridData(show: true, drawVerticalLine: false),
+        borderData: FlBorderData(
+            show: true, border: Border.all(color: Colors.blueGrey, width: 2)),
+        lineBarsData: [
+          line(points),
+        ],
+      ),
+      swapAnimationDuration: Duration.zero,
+    );
   }
 }
