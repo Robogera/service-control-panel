@@ -36,24 +36,30 @@ class _AppState extends State<App> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      animationDuration: Duration.zero,
+    );
   }
 
   Widget tabLabel(String name, IconData iconData) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Icon(
           iconData,
-          size: 24.0,
+          size: 20.0,
         ),
-        const SizedBox(width: 8.0),
+        const SizedBox(width: 6.0),
         Text(
           name,
           textAlign: TextAlign.center,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontWeight: FontWeight.w200,
-            fontSize: 20.0,
+            fontSize: 16.0,
           ),
         ),
       ],
@@ -64,20 +70,31 @@ class _AppState extends State<App> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Control Panel'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: <Widget>[
-            Tab(
-              child: tabLabel('home', Icons.home),
+        toolbarHeight: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(50.0),
+          child: Container(
+            alignment: Alignment.center,
+            constraints: const BoxConstraints(maxWidth: 600.0),
+            child: TabBar(
+              overlayColor: const MaterialStatePropertyAll(Colors.transparent),
+              unselectedLabelColor: Colors.white70,
+              labelColor: Colors.white,
+              indicatorSize: TabBarIndicatorSize.label,
+              controller: _tabController,
+              tabs: <Widget>[
+                Tab(
+                  child: tabLabel('home', Icons.home),
+                ),
+                Tab(
+                  child: tabLabel('logs', Icons.folder_shared),
+                ),
+                Tab(
+                  child: tabLabel('settings', Icons.settings),
+                ),
+              ],
             ),
-            Tab(
-              child: tabLabel('logs', Icons.folder_shared),
-            ),
-            Tab(
-              child: tabLabel('settings', Icons.settings),
-            ),
-          ],
+          ),
         ),
       ),
       body: TabBarView(
@@ -124,6 +141,13 @@ class _MainPageState extends State<MainPage>
   //   super.initState();
   // }
 
+  Color setColor(List<bool> state) {
+    if (state[0]) {
+      return Colors.green;
+    }
+    return Colors.red;
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -132,20 +156,20 @@ class _MainPageState extends State<MainPage>
         Expanded(
           child: ListView(
             children: [
-              const SizedBox(height: 24.0),
+              const SizedBox(height: 16.0),
               const Padding(
-                padding: EdgeInsets.only(left: 16.0),
+                padding: EdgeInsets.only(left: 74.0),
                 child: Text(
                   'Performance:',
                   textAlign: TextAlign.left,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontWeight: FontWeight.w300,
-                    fontSize: 24.0,
+                    fontSize: 16.0,
                   ),
                 ),
               ),
-              const SizedBox(height: 24.0),
+              const SizedBox(height: 8.0),
               Container(
                 constraints: const BoxConstraints(
                   maxHeight: 300,
@@ -158,10 +182,20 @@ class _MainPageState extends State<MainPage>
           ),
         ),
         Container(
-          constraints: const BoxConstraints(minWidth: 200, maxWidth: 300),
+          constraints: const BoxConstraints(minWidth: 150, maxWidth: 200),
           child: ListView(
             children: [
-              const Text("Service"),
+              SizedBox.fromSize(size: const Size.fromHeight(16.0)),
+              const Text(
+                'Status: Running',
+                textAlign: TextAlign.left,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w300,
+                  fontSize: 16.0,
+                ),
+              ),
+              SizedBox.fromSize(size: const Size.fromHeight(16.0)),
               ToggleButtons(
                 onPressed: (int indexPressed) {
                   setState(() {
@@ -172,7 +206,9 @@ class _MainPageState extends State<MainPage>
                 },
                 isSelected: _selectedPowerAction,
                 selectedColor: Colors.white,
-                fillColor: Colors.blueGrey[600],
+                selectedBorderColor: setColor(_selectedPowerAction),
+                disabledBorderColor: setColor(_selectedPowerAction),
+                fillColor: setColor(_selectedPowerAction).withOpacity(0.8),
                 children: powerActions,
               ),
               const Text("Start on server boot"),
@@ -186,7 +222,9 @@ class _MainPageState extends State<MainPage>
                 },
                 isSelected: _selectedAutostartPolicy,
                 selectedColor: Colors.white,
-                fillColor: Colors.blueGrey[600],
+                selectedBorderColor: setColor(_selectedAutostartPolicy),
+                disabledBorderColor: setColor(_selectedAutostartPolicy),
+                fillColor: setColor(_selectedAutostartPolicy).withOpacity(0.8),
                 children: autostartPolicies,
               ),
             ],
@@ -207,7 +245,7 @@ class PerformanceChart extends StatefulWidget {
 }
 
 class _PerformanceChartState extends State<PerformanceChart> {
-  final maxSpots = 1000;
+  final maxSpots = 600;
   final pointsCPU = <FlSpot>[];
   final pointsRAM = <FlSpot>[];
 
@@ -251,7 +289,7 @@ class _PerformanceChartState extends State<PerformanceChart> {
       dotData: FlDotData(
         show: false,
       ),
-      barWidth: 3,
+      barWidth: 1.5,
       isCurved: true,
       color: color,
       belowBarData: BarAreaData(
@@ -268,7 +306,7 @@ class _PerformanceChartState extends State<PerformanceChart> {
     var convertedTime = DateTime.fromMillisecondsSinceEpoch(tick.toInt());
     return labelText(
       DateFormat('HH:mm:ss').format(convertedTime),
-      10.0,
+      12.0,
     );
   }
 
@@ -276,7 +314,7 @@ class _PerformanceChartState extends State<PerformanceChart> {
     final str = tick.toString();
     return labelText(
       "$str%",
-      10.0,
+      12.0,
     );
   }
 
@@ -327,7 +365,7 @@ class _PerformanceChartState extends State<PerformanceChart> {
         borderData: FlBorderData(
           show: true,
           border: Border.all(
-            color: Colors.indigo,
+            color: Colors.black54,
             width: 2,
           ),
         ),
