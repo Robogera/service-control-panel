@@ -1,9 +1,16 @@
-import 'package:intl/intl.dart';
+// Dart std imports
 import 'dart:async';
 import 'dart:math' as math;
 
+// pubdev packages
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+// local imports
+import 'package:control/pages/main.dart';
+import 'package:control/pages/logs.dart';
+import 'package:control/pages/conf.dart';
 
 void main() => runApp(const MyApp());
 
